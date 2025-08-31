@@ -1,0 +1,109 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="max-w-5xl mx-auto mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Left sidebar -->
+  <aside class="bg-white rounded shadow p-4 h-fit">
+    <h2 class="text-lg font-semibold mb-3">Account</h2>
+    <ul class="space-y-2">
+      <li>
+        <a href="/profile/" class="text-blue-600 hover:underline">Profile</a>
+      </li>
+      <li>
+        <a href="/profile/orders/" class="font-semibold text-gray-900"
+          >Orders</a
+        >
+      </li>
+      <li>
+        <a href="/profile/security/" class="text-blue-600 hover:underline"
+          >Security</a
+        >
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Orders -->
+  <main class="lg:col-span-2">
+    <h1 class="text-2xl font-bold mb-4">🧾 Order History</h1>
+
+    {% if orders %}
+    <div class="space-y-4">
+      {% for o in orders %}
+      <div class="bg-white rounded shadow p-4">
+        <div class="flex flex-wrap justify-between items-center">
+          <div>
+            <p class="text-sm text-gray-500">Order #{{ o.id }}</p>
+            <p class="text-sm text-gray-500">Ref: {{ o.payment.reference }}</p>
+            <p class="text-sm text-gray-500">
+              Date: {{ o.created|date:"Y-m-d H:i" }}
+            </p>
+          </div>
+          <div class="text-right">
+            <span
+              class="inline-block px-3 py-1 rounded text-white {% if o.status == 'paid' %} bg-green-600 {% else %} bg-gray-500 {% endif %}"
+            >
+              {{ o.status|title }}
+            </span>
+            <p class="mt-2 font-semibold">₦{{ o.total_kobo|floatformat:2 }}</p>
+          </div>
+        </div>
+        <div class="mt-3 border-t pt-3 space-y-2">
+          {% for it in o.items.all %}
+          <div class="flex justify-between text-sm">
+            <span>{{ it.name_snapshot }} × {{ it.quantity }}</span>
+            <span
+              >₦{{ it.price_kobo|divisibleby:100|yesno:"0,0" }}{{
+              it.price_kobo|floatformat:0 }}</span
+            >
+            <!-- Simpler: show computed line total -->
+            <span>₦{{ it.price_kobo|add:"0"|floatformat:0 }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p>You have no orders yet.</p>
+
+    {% endif %}
+  </main>
+</div>
+<script>
+  async function reorder(orderId) {
+    try {
+      const res = await fetch(`/api/payments/orders/${orderId}/`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch order");
+      const order = await res.json();
+
+      // Transform items into your cart shape
+      const items = order.items.map((it) => ({
+        id: it.product_id || null,
+        name: it.name_snapshot,
+        price: it.price_naira,
+        quantity: it.quantity,
+        image: "", // optional, fill if you want
+      }));
+
+      // Merge into existing cart
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      items.forEach((newItem) => {
+        const ex = cart.find(
+          (c) => c.id === newItem.id && c.name === newItem.name
+        );
+        if (ex) ex.quantity += newItem.quantity;
+        else cart.push(newItem);
+      });
+      localStorage.setItem("cart", JSON.stringify(cart));
+
+      // Optional: redirect to cart
+      window.location.href = "/cart/";
+    } catch (e) {
+      alert("Could not re-order. Please try again.");
+      console.error(e);
+    }
+  }
+</script>
+
+{% endblock %}

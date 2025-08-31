@@ -1,0 +1,108 @@
+{% extends "base.html" %} {% block content %}
+<div class="max-w-md mx-auto bg-white p-6 rounded shadow mb-10 mt-10">
+  <h1 class="text-2xl font-bold mb-4">Create Account</h1>
+  <div id="error"></div>
+  <div id="success"></div>
+  <form id="registerForm" class="space-y-4">
+    <input
+      type="text"
+      name="username"
+      placeholder="Username"
+      class="border p-2 w-full"
+      id="username"
+    />
+    <input
+      type="email"
+      name="email"
+      placeholder="Email"
+      class="border p-2 w-full"
+      id="email"
+    />
+    <input
+      type="password"
+      name="password"
+      placeholder="Password"
+      class="border p-2 w-full"
+      id="password"
+    />
+    <input
+      type="password"
+      name="confirm_password"
+      placeholder="Confirm Password"
+      class="border p-2 w-full"
+      id="confirm_password"
+    />
+    <button
+      type="submit"
+      class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700"
+    >
+      Register
+    </button>
+  </form>
+</div>
+<script>
+  //force to generate token key
+  document
+    .getElementById("registerForm")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        username: e.target.username.value,
+        email: e.target.email.value,
+        password: e.target.password.value,
+        confirm_password: e.target.confirm_password.value,
+        //token: "{{ token }}", // Ensure this token is generated server-side and passed to the template
+      };
+
+      const res = await fetch("/accounts/api/register/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        //alert(data.message);
+        // display success message and redirect after 2 seconds
+        document.getElementById("success").innerHTML =
+          "<p class='fixed top-21 left-25 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-bounce'>" +
+          data.message +
+          "</p>";
+        setTimeout(() => {
+          window.location.href = "/profile/"; // redirect 2 seconds after register
+        }, 2000);
+      } else {
+        let errorMessage = "";
+
+        if (data.error) {
+          // If your API explicitly sets an 'error' key
+          errorMessage = data.error;
+          // display error message in error
+          document.getElementById("error").innerHTML =
+            "<p class='fixed top-25 right-80 bg-red-600 text-white w-500 px-4 py-2 rounded shadow-lg animate-bounce'> " +
+            errorMessage +
+            "</p>";
+        } else {
+          // Join all serializer error messages into a single string
+          errorMessage = Object.values(data).flat().join("\n");
+        }
+
+        //alert(errorMessage);
+        //set border red on error message
+        document.getElementById("username").classList.add("border-red-500");
+        document.getElementById("email").classList.add("border-red-500");
+        document.getElementById("password").classList.add("border-red-500");
+        document
+          .getElementById("confirm_password")
+          .classList.add("border-red-500");
+      }
+      // set border radius 5px
+      document.getElementById("username").style.borderRadius = "5px";
+      document.getElementById("email").style.borderRadius = "5px";
+      document.getElementById("password").style.borderRadius = "5px";
+      document.getElementById("confirm_password").style.borderRadius = "5px";
+    });
+</script>
+
+{% include 'footer.html' %} {% endblock %}

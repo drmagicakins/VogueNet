@@ -1,0 +1,199 @@
+{% extends "base.html" %} {% block content %}
+<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+  <h1 class="text-3xl font-bold mb-6">🛒 My Cart</h1>
+
+  <div id="cartItems" class="space-y-6"></div>
+
+  <div class="mt-6 flex justify-between items-center">
+    <div id="cartTotal" class="text-2xl font-semibold text-green-700"></div>
+    <div id="proceedToCartBtn"></div>
+    <button onclick="checkout()" class="mt-2 bg-green-600 text-white px-4 py-2 rounded">
+      Pay with PayStack
+    </button>
+    <script>
+      // Function to update cart count in header
+      function getCartTotalNaira() {
+        const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+        return cart.reduce(
+          (sum, item) => sum + Number(item.price) * (item.quantity || 1),
+          0
+        );
+      }
+
+      function checkout() {
+        const total = getCartTotalNaira();
+        if (total <= 0) {
+          alert("Your cart is empty");
+          return;
+        }
+
+        // Create a unique reference (you can also request one from backend)
+        const ref = "VOG-" + Date.now();
+
+        const handler = PaystackPop.setup({
+          key: "{{ PAYSTACK_PUBLIC_KEY|default:'' }}", // optional if you pass directly; better inject from settings
+          email: window.currentUserEmail || "customer@voguenet.com",
+          amount: Math.round(total * 100), // in kobo
+          ref: ref,
+          currency: "NGN",
+          metadata: { cart: JSON.parse(localStorage.getItem("cart") || "[]") },
+          callback: function (response) {
+            // Verify on your server
+            fetch(`/api/payments/paystack/verify/${response.reference}/`)
+              .then((r) => r.json())
+              .then((data) => {
+                if (data.ok) {
+                  // success: clear cart and redirect
+                  localStorage.removeItem("cart");
+                  window.location.href = "/checkout-success/";
+                } else {
+                  alert("Verification failed. Please contact support.");
+                }
+              })
+              .catch(() => alert("Verification error. Check your network."));
+          },
+          onClose: function () {
+            console.log("Payment closed");
+          },
+        });
+        handler.openIframe();
+      }
+    </script>
+    <button
+      onclick="checkoutFlutterwave()"
+      class="mt-2 bg-indigo-600 text-white px-4 py-2 rounded"
+    >
+      Pay with Flutterwave
+    </button>
+
+    <script>
+      function checkoutFlutterwave() {
+        const total = getCartTotalNaira();
+        if (total <= 0) {
+          alert("Your cart is empty");
+          return;
+        }
+
+        FlutterwaveCheckout({
+          public_key: "{{ FLUTTERWAVE_PUBLIC_KEY|default:'' }}",
+          tx_ref: "VOG-" + Date.now(),
+          amount: total,
+          currency: "NGN",
+          payment_options: "card,banktransfer,ussd",
+          meta: {
+            cart: JSON.parse(localStorage.getItem("cart") || "[]"),
+          },
+          customer: {
+            email: window.currentUserEmail || "customer@voguenet.com",
+          },
+          callback: function (data) {
+            // data.transaction_id for verify
+            fetch(
+              `/api/payments/flutterwave/verify/?transaction_id=${data.transaction_id}`
+            )
+              .then((r) => r.json())
+              .then((d) => {
+                if (d.ok) {
+                  localStorage.removeItem("cart");
+                  window.location.href = "/checkout-success/";
+                } else {
+                  alert("Verification failed. Please contact support.");
+                }
+              })
+              .catch(() => alert("Verification error. Check your network."));
+          },
+          onclose: function () {},
+          customizations: {
+            title: "VogueNet",
+            description: "Order Payment",
+          },
+        });
+      }
+    </script>
+  </div>
+</div>
+
+<script>
+  async function fetchProductById(id) {
+    const res = await fetch(`/api/products/${id}/`);
+    if (!res.ok) throw new Error("Failed to fetch product");
+    return await res.json();
+  }
+
+  async function loadCart() {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const cartContainer = document.getElementById("cartItems");
+    const cartTotal = document.getElementById("cartTotal");
+
+    if (cart.length === 0) {
+      cartContainer.innerHTML = "<p>Your cart is empty.</p>";
+      cartTotal.innerText = "";
+      return;
+    }
+
+    let total = 0;
+    cartContainer.innerHTML = "";
+
+    cart.forEach((item, index) => {
+      total += item.price * item.quantity;
+      cartContainer.innerHTML += `
+    <div class="flex justify-between items-center bg-gray-100 p-4 rounded">
+      <div>
+        <div class="size-24 shrink-0 overflow-hidden rounded-md border border-gray-200">
+         <img src="${
+           item.image
+         }" alt="Salmon orange fabric pouch with match zipper, gray zipper pull, and adjustable hip belt." class="size-full object-cover"/>
+        </div>
+        <h2 class="font-bold">${item.name}</h2>
+        <p>₦${item.price} x ${item.quantity} = ₦${
+        item.price * item.quantity
+      }</p>
+        <div class="flex items-center mt-2">
+          <button onclick="changeQty(${index}, -1)" class="px-2 bg-gray-300 rounded">-</button>
+          <span class="px-3">${item.quantity}</span>
+          <button onclick="changeQty(${index}, 1)" class="px-2 bg-gray-300 rounded">+</button>
+        </div>
+      </div>
+      <button onclick="removeItem(${index})" class="text-red-600 font-semibold">Remove</button>
+    </div>
+  `;
+    });
+
+    cartTotal.innerText = "Total: ₦" + total.toFixed(2);
+
+    // display proceed to cart button
+    const proceedToCartBtn = document.getElementById("proceedToCartBtn");
+    if (total.length > 0) {
+      proceedToCartBtn.innerHTML = `<button onclick="checkout()" class="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700">
+                        Proceed to Checkout</button>`;
+      // refresh cart to display products immediately
+      if (typeof loadCart === "function") {
+        loadCart();
+      }
+    } else {
+      proceedToCartBtn.innerHTML = "";
+    }
+  }
+
+  function removeItem(index) {
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    cart.splice(index, 1);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+    updateCartCount();
+  }
+
+  function changeQty(index, delta) {
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    cart[index].quantity += delta;
+    if (cart[index].quantity < 1) {
+      cart.splice(index, 1);
+    }
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+    updateCartCount();
+  }
+
+  loadCart();
+</script>
+{% include 'footer.html' %} {% endblock %}

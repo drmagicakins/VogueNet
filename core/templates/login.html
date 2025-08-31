@@ -1,0 +1,80 @@
+{% extends "base.html" %} {% block content %}
+<div class="max-w-md mx-auto bg-white p-6 rounded shadow mt-10 mb-10">
+  <h1 class="text-2xl font-bold mb-4">Login</h1>
+  <form id="loginForm" class="space-y-4">
+    <div id="data-error"></div>
+    <div id="data-success"></div>
+    <input
+      type="email"
+      name="email"
+      placeholder="Email"
+      class="border p-2 w-full"
+      id="email"
+      required
+    />
+
+    <input
+      type="password"
+      name="password"
+      placeholder="Password"
+      class="border p-2 w-full"
+      id="password"
+      required
+    />
+    <button type="submit" class="bg-green-500 text-white w-full p-2 rounded">
+      Login
+    </button>
+  </form>
+
+  <script>
+    document
+      .getElementById("loginForm")
+      .addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = {
+          email: e.target.email.value,
+          password: e.target.password.value,
+        };
+
+        const res = await fetch("/accounts/api/login/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem("access_token", data.access);
+          localStorage.setItem("refresh_token", data.refresh);
+          document.getElementById(
+            "data-success"
+          ).innerHTML = `<p style="color: green; background-color:lightgreen; padding:5px;" class="fixed top-21 left-25 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-bounce">${data.message}</p>`;
+          // border and radius
+          document.getElementById("email").classList.add("border-green-500");
+          document.getElementById("password").classList.add("border-green-500");
+          document.getElementById("email").style.borderRadius = "5px";
+          document.getElementById("password").style.borderRadius = "5px";
+          // display login success after 2 seconds showing loader
+          document.getElementById("data-error").innerHTML = "";
+          setTimeout(() => {
+            window.location.href = "/profile/";
+          }, 2000);
+        } else {
+          //alert(data.error || "Login failed");
+          // display error in data-error with red colour
+          document.getElementById(
+            "data-error"
+          ).innerHTML = `<p style="color: red; background-color:pink; padding:5px;" class="fixed top-21 left-25 bg-red-600 text-white px-4 py-2 rounded shadow-lg animate-bounce">${
+            data.error || "Login failed - please check your email and password"
+          }</p>`;
+          document.getElementById("email").classList.add("border-red-500");
+          document.getElementById("password").classList.add("border-red-500");
+          // border-radius 5
+          document.getElementById("email").style.borderRadius = "5px";
+          document.getElementById("password").style.borderRadius = "5px";
+        }
+      });
+  </script>
+</div>
+{% include 'footer.html' %} {% endblock %}

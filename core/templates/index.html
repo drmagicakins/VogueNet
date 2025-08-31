@@ -1,0 +1,510 @@
+{% extends 'base.html' %} {% block content %}
+<div
+  class="relative w-full max-w-7xl mx-auto overflow-hidden rounded-lg shadow-lg"
+>
+  <!-- Slider Wrapper -->
+  <div id="slider" class="flex transition-transform duration-500 ease-in-out">
+    <!-- Slide 1 -->
+    <div
+      class="min-w-full h-64 bg-cover bg-center flex items-center justify-center text-white text-2xl font-bold"
+      style="background-image: url('https://picsum.photos/id/1011/1200/400')"
+    >
+      ✨ New Collection
+    </div>
+    <!-- Slide 2 -->
+    <div
+      class="min-w-full h-64 bg-cover bg-center flex items-center justify-center text-white text-2xl font-bold"
+      style="background-image: url('https://picsum.photos/id/1025/1200/400')"
+    >
+      🛍 Big Discounts
+    </div>
+    <!-- Slide 3 -->
+    <div
+      class="min-w-full h-64 bg-cover bg-center flex items-center justify-center text-white text-2xl font-bold"
+      style="background-image: url('https://picsum.photos/id/1041/1200/400')"
+    >
+      👟 Best Sellers
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <button
+    onclick="moveSlide(-1)"
+    class="absolute top-1/2 left-4 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black"
+  >
+    ⬅
+  </button>
+  <button
+    onclick="moveSlide(1)"
+    class="absolute top-1/2 right-4 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black"
+  >
+    ➡
+  </button>
+
+  <!-- Dots -->
+  <div
+    id="dots"
+    class="absolute bottom-4 w-full flex justify-center space-x-2"
+  ></div>
+</div>
+
+<script>
+  const slider = document.getElementById("slider");
+  const totalSlides = slider.children.length;
+  let index = 0;
+
+  // Create dots
+  const dotsContainer = document.getElementById("dots");
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement("button");
+    dot.className = "w-3 h-3 rounded-full bg-gray-400";
+    dot.addEventListener("click", () => goToSlide(i));
+    dotsContainer.appendChild(dot);
+  }
+
+  function updateDots() {
+    [...dotsContainer.children].forEach((dot, i) => {
+      dot.className = `w-3 h-3 rounded-full ${
+        i === index ? "bg-blue-500" : "bg-gray-400"
+      }`;
+    });
+  }
+
+  function moveSlide(step) {
+    index = (index + step + totalSlides) % totalSlides;
+    slider.style.transform = `translateX(-${index * 100}%)`;
+    updateDots();
+  }
+
+  function goToSlide(i) {
+    index = i;
+    slider.style.transform = `translateX(-${index * 100}%)`;
+    updateDots();
+  }
+
+  // Auto-slide every 5s
+  setInterval(() => moveSlide(1), 5000);
+
+  updateDots();
+</script>
+
+<div class="text-center mt-20">
+  <h1 class="text-4xl font-bold text-blue-700">Welcome to VogueNet 👗</h1>
+  <p class="mt-4 text-gray-600">Your fashion eCommerce solution.</p>
+</div>
+<div class="bg-white">
+  <div
+    class="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8"
+  >
+    <h1 class="text-3xl font-bold mb-4">🛍️ VogueNet Fashion Store</h1>
+    <div
+      id="products"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    ></div>
+    <script>
+      // Fetch products from API and display them
+      fetch("/api/products/")
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return res.json();
+        })
+        .then((data) => {
+          const container = document.getElementById("products");
+          container.innerHTML = ""; // Clear before appending
+
+          data.results.forEach((product) => {
+            const productCard = document.createElement("div");
+            productCard.className = "border p-4 rounded shadow";
+
+            productCard.innerHTML = `
+          <img src="${product.image}" class="w-full h-48 object-cover rounded" />
+          <h2 class="text-lg font-semibold mt-2">${product.name}</h2>
+          <p class="text-gray-600">${product.description}</p>
+          <p class="text-green-600 font-bold">₦${product.price}</p>
+          <a href="/api/products/share/${product.id}/" target="_blank" class="text-blue-500 mt-2 inline-block">🔗 Share</a>
+          <button 
+            class="add-to-cart mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded flex items-center gap-2"
+            data-product-id="${product.id}">
+            <span class="text">🛒 Add to Cart</span>
+            <svg class="loader hidden w-5 h-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"></path>
+            </svg>
+          </button>
+        `;
+
+            container.appendChild(productCard);
+          });
+
+          // Add click listeners to all "Add to Cart" buttons
+          document.querySelectorAll(".add-to-cart").forEach((btn) => {
+            btn.addEventListener("click", function () {
+              const loader = this.querySelector(".loader");
+              const text = this.querySelector(".text");
+
+              loader.classList.remove("hidden");
+              text.textContent = "Adding...";
+
+              const productId = this.getAttribute("data-product-id");
+
+              // Simulate cart add with timeout (replace with actual POST later)
+              // Fetch the product from data array by ID
+              const selectedProduct = data.results.find(
+                (p) => p.id == productId
+              );
+
+              if (selectedProduct) {
+                // Retrieve current cart from localStorage or initialize
+                let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+                // Check if product already exists in cart
+                let existing = cart.find(
+                  (item) => item.id === selectedProduct.id
+                );
+                if (existing) {
+                  existing.quantity += 1;
+                } else {
+                  selectedProduct.quantity = 1;
+                  cart.push(selectedProduct);
+                }
+
+                // Save back to localStorage
+                localStorage.setItem("cart", JSON.stringify(cart));
+
+                // Show toast
+                showToast(`${selectedProduct.name} added to cart`);
+
+                // Optional: Update cart badge count (if exists)
+                if (document.getElementById("cart-count")) {
+                  document.getElementById("cart-count").innerText = cart.length;
+                }
+
+                // Simulate loading/feedback
+                setTimeout(() => {
+                  loader.classList.add("hidden");
+                  text.textContent = "✅ Added";
+                  this.classList.remove("bg-blue-600");
+                  this.classList.add("bg-green-600");
+
+                  setTimeout(() => {
+                    this.classList.remove("bg-green-600");
+                    this.classList.add("bg-blue-600");
+                    text.textContent = "🛒 Add to Cart";
+                  }, 2000);
+                }, 800);
+                // refresh cart to display products immediately
+                if (typeof loadCart === "function") {
+                  loadCart();
+                }
+              }
+            });
+          });
+        });
+
+      // Toast notification
+      function showToast(message) {
+        const toast = document.createElement("div");
+        toast.textContent = message;
+        toast.className =
+          "fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-bounce";
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+      }
+    </script>
+  </div>
+</div>
+<div class="bg-white">
+  <!-- <div class="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
+    <h2 class="text-2xl font-bold tracking-tight text-gray-900">
+      Customers also purchased
+    </h2>
+
+    <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+      <div class="group relative">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-01.jpg"
+          alt="Front of men&#039;s Basic Tee in black."
+          class="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75 lg:aspect-auto lg:h-80"
+        />
+        <div class="mt-4 flex justify-between">
+          <div>
+            <h3 class="text-sm text-gray-700">
+              <a href="/product_detail">
+                <span aria-hidden="true" class="absolute inset-0"></span>
+                Basic Tee
+              </a>
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">Black</p>
+          </div>
+          <p class="text-sm font-medium text-gray-900">$35</p>
+        </div>
+      </div>
+      <div class="group relative">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-02.jpg"
+          alt="Front of men&#039;s Basic Tee in white."
+          class="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75 lg:aspect-auto lg:h-80"
+        />
+        <div class="mt-4 flex justify-between">
+          <div>
+            <h3 class="text-sm text-gray-700">
+              <a href="#">
+                <span aria-hidden="true" class="absolute inset-0"></span>
+                Basic Tee
+              </a>
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">Aspen White</p>
+          </div>
+          <p class="text-sm font-medium text-gray-900">$35</p>
+        </div>
+      </div>
+      <div class="group relative">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-03.jpg"
+          alt="Front of men&#039;s Basic Tee in dark gray."
+          class="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75 lg:aspect-auto lg:h-80"
+        />
+        <div class="mt-4 flex justify-between">
+          <div>
+            <h3 class="text-sm text-gray-700">
+              <a href="#">
+                <span aria-hidden="true" class="absolute inset-0"></span>
+                Basic Tee
+              </a>
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">Charcoal</p>
+          </div>
+          <p class="text-sm font-medium text-gray-900">$35</p>
+        </div>
+      </div>
+      <div class="group relative">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/product-page-01-related-product-04.jpg"
+          alt="Front of men&#039;s Artwork Tee in peach with white and brown dots forming an isometric cube."
+          class="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75 lg:aspect-auto lg:h-80"
+        />
+        <div class="mt-4 flex justify-between">
+          <div>
+            <h3 class="text-sm text-gray-700">
+              <a href="#">
+                <span aria-hidden="true" class="absolute inset-0"></span>
+                Artwork Tee
+              </a>
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">Iso Dots</p>
+          </div>
+          <p class="text-sm font-medium text-gray-900">$35</p>
+        </div>
+      </div>
+    </div>
+  </div> -->
+  <div class="max-w-7xl mx-auto px-4 py-8 space-y-12">
+    <!-- Customers Also Purchased -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4">🛍 Customers Also Purchased</h2>
+      <div class="relative">
+        <!-- Left Button -->
+        <button
+          onclick="scrollCarousel('purchasedCarousel', -1)"
+          class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow hover:bg-gray-300 z-10"
+        >
+          ◀
+        </button>
+
+        <!-- Carousel Wrapper -->
+        <div
+          id="purchasedCarousel"
+          class="flex overflow-x-auto space-x-4 scroll-smooth no-scrollbar"
+        >
+          <!-- Products loaded dynamically -->
+        </div>
+
+        <!-- Right Button -->
+        <button
+          onclick="scrollCarousel('purchasedCarousel', 1)"
+          class="absolute right-0 top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow hover:bg-gray-300 z-10"
+        >
+          ▶
+        </button>
+      </div>
+    </section>
+
+    <!-- Best Sales -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4">🔥 Best Sales</h2>
+      <div class="relative">
+        <!-- Left Button -->
+        <button
+          onclick="scrollCarousel('salesCarousel', -1)"
+          class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow hover:bg-gray-300 z-10"
+        >
+          ◀
+        </button>
+
+        <!-- Carousel Wrapper -->
+        <div
+          id="salesCarousel"
+          class="flex overflow-x-auto space-x-4 scroll-smooth no-scrollbar"
+        >
+          <!-- Products loaded dynamically -->
+        </div>
+
+        <!-- Right Button -->
+        <button
+          onclick="scrollCarousel('salesCarousel', 1)"
+          class="absolute right-0 top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow hover:bg-gray-300 z-10"
+        >
+          ▶
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Simple scroll function for carousel
+    function scrollCarousel(id, direction) {
+      const container = document.getElementById(id);
+      const scrollAmount = 180; // ~150px + gap
+      container.scrollBy({
+        left: direction * scrollAmount,
+        behavior: "smooth",
+      });
+    }
+
+    // Render products into a carousel
+    function renderProducts(containerId, products) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = products
+        .map(
+          (p) => `
+      <div class="flex-shrink-0 w-[150px] text-center">
+        <img src="${p.image}" alt="${p.name}"
+          class="w-[150px] h-[150px] object-cover rounded" />
+        <p class="mt-2 text-sm font-medium">${p.name}</p>
+        <p class="text-xs text-gray-600">₦${p.price}</p>
+      </div>
+    `
+        )
+        .join("");
+    }
+
+    // Fetch products from API
+    async function loadProducts(url, containerId) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const data = await res.json();
+        renderProducts(containerId, data.slice(0, 8)); // only show 8 items
+      } catch (error) {
+        console.error(error);
+        document.getElementById(containerId).innerHTML =
+          "<p class='text-red-500'>Error loading products.</p>";
+      }
+    }
+
+    // Init
+    loadProducts(
+      "/api/products/customers-also-purchased/",
+      "purchasedCarousel"
+    );
+    loadProducts("/api/products/best-sales/", "salesCarousel");
+  </script>
+
+  <style>
+    /* Hide scrollbar but keep functionality */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</div>
+<div class="bg-white">
+  <div
+    class="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8"
+  >
+    <h2 class="sr-only">Products</h2>
+
+    <div
+      class="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8"
+    >
+      <a href="#" class="group">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/category-page-04-image-card-01.jpg"
+          alt="Tall slender porcelain bottle with natural clay textured body and cork stopper."
+          class="aspect-square w-full rounded-lg bg-gray-200 object-cover group-hover:opacity-75 xl:aspect-7/8"
+        />
+        <h3 class="mt-4 text-sm text-gray-700">Earthen Bottle</h3>
+        <p class="mt-1 text-lg font-medium text-gray-900">$48</p>
+      </a>
+      <a href="#" class="group">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/category-page-04-image-card-02.jpg"
+          alt="Olive drab green insulated bottle with flared screw lid and flat top."
+          class="aspect-square w-full rounded-lg bg-gray-200 object-cover group-hover:opacity-75 xl:aspect-7/8"
+        />
+        <h3 class="mt-4 text-sm text-gray-700">Nomad Tumbler</h3>
+        <p class="mt-1 text-lg font-medium text-gray-900">$35</p>
+      </a>
+      <a href="#" class="group">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/category-page-04-image-card-03.jpg"
+          alt="Person using a pen to cross a task off a productivity paper card."
+          class="aspect-square w-full rounded-lg bg-gray-200 object-cover group-hover:opacity-75 xl:aspect-7/8"
+        />
+        <h3 class="mt-4 text-sm text-gray-700">Focus Paper Refill</h3>
+        <p class="mt-1 text-lg font-medium text-gray-900">$89</p>
+      </a>
+      <a href="#" class="group">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/category-page-04-image-card-04.jpg"
+          alt="Hand holding black machined steel mechanical pencil with brass tip and top."
+          class="aspect-square w-full rounded-lg bg-gray-200 object-cover group-hover:opacity-75 xl:aspect-7/8"
+        />
+        <h3 class="mt-4 text-sm text-gray-700">Machined Mechanical Pencil</h3>
+        <p class="mt-1 text-lg font-medium text-gray-900">$35</p>
+      </a>
+      <a href="#" class="group">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/category-page-04-image-card-05.jpg"
+          alt="Paper card sitting upright in walnut card holder on desk."
+          class="aspect-square w-full rounded-lg bg-gray-200 object-cover group-hover:opacity-75 xl:aspect-7/8"
+        />
+        <h3 class="mt-4 text-sm text-gray-700">Focus Card Tray</h3>
+        <p class="mt-1 text-lg font-medium text-gray-900">$64</p>
+      </a>
+      <a href="#" class="group">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/category-page-04-image-card-06.jpg"
+          alt="Stack of 3 small drab green cardboard paper card refill boxes with white text."
+          class="aspect-square w-full rounded-lg bg-gray-200 object-cover group-hover:opacity-75 xl:aspect-7/8"
+        />
+        <h3 class="mt-4 text-sm text-gray-700">Focus Multi-Pack</h3>
+        <p class="mt-1 text-lg font-medium text-gray-900">$39</p>
+      </a>
+      <a href="#" class="group">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/category-page-04-image-card-07.jpg"
+          alt="Brass scissors with geometric design, black steel finger holes, and included upright brass stand."
+          class="aspect-square w-full rounded-lg bg-gray-200 object-cover group-hover:opacity-75 xl:aspect-7/8"
+        />
+        <h3 class="mt-4 text-sm text-gray-700">Brass Scissors</h3>
+        <p class="mt-1 text-lg font-medium text-gray-900">$50</p>
+      </a>
+      <a href="#" class="group">
+        <img
+          src="https://tailwindcss.com/plus-assets/img/ecommerce-images/category-page-04-image-card-08.jpg"
+          alt="Textured gray felt pouch for paper cards with snap button flap and elastic pen holder loop."
+          class="aspect-square w-full rounded-lg bg-gray-200 object-cover group-hover:opacity-75 xl:aspect-7/8"
+        />
+        <h3 class="mt-4 text-sm text-gray-700">Focus Carry Pouch</h3>
+        <p class="mt-1 text-lg font-medium text-gray-900">$32</p>
+      </a>
+    </div>
+  </div>
+</div>
+{% include 'footer.html' %} {% endblock %}

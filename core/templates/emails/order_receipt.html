@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: system-ui, -apple-system, Segoe UI, Roboto">
+    <h2>Thanks for your purchase! 🎉</h2>
+    <p>
+      Order <strong>#{{ order.id }}</strong> (Ref: {{ order.payment.reference
+      }})
+    </p>
+    <p>Status: <strong>{{ order.status|title }}</strong></p>
+    <hr />
+    <table
+      width="100%"
+      cellpadding="6"
+      cellspacing="0"
+      style="border-collapse: collapse"
+    >
+      <thead>
+        <tr>
+          <th align="left">Item</th>
+          <th align="right">Qty</th>
+          <th align="right">Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it in order.items.all %}
+        <tr>
+          <td>{{ it.name_snapshot }}</td>
+          <td align="right">{{ it.quantity }}</td>
+          <td align="right">
+            ₦{{ it.price_kobo|floatformat:0|add:"0"|divisibleby:100|yesno:" , "
+            }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <hr />
+    <p><strong>Total:</strong> ₦{{ order.total_naira|floatformat:2 }}</p>
+    <p>We hope you enjoy your purchase.</p>
+    <p>— VogueNet</p>
+  </body>
+</html>

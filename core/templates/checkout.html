@@ -1,0 +1,96 @@
+{% extends "base.html" %} {% block content %}
+<div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+  <h1 class="text-2xl font-bold mb-4">💳 Checkout</h1>
+  <div id="checkoutItems" class="space-y-4"></div>
+  <div id="checkoutTotal" class="text-xl font-semibold mt-6"></div>
+
+  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <button
+      id="payWithPaystack"
+      class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+    >
+      Pay with Paystack
+    </button>
+    <button
+      id="payWithFlutterwave"
+      class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+    >
+      Pay with Flutterwave
+    </button>
+  </div>
+</div>
+
+<script>
+  let totalAmount = 0;
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+  function loadCheckout() {
+    const ctn = document.getElementById("checkoutItems");
+    const tot = document.getElementById("checkoutTotal");
+    if (!cart.length) {
+      ctn.innerHTML = "<p>Your cart is empty.</p>";
+      tot.innerText = "";
+      return;
+    }
+    let sum = 0;
+    ctn.innerHTML = "";
+    cart.forEach((item) => {
+      const qty = item.quantity || 1;
+      const line = item.price * qty;
+      sum += line;
+      ctn.innerHTML += `
+        <div class="flex justify-between items-center bg-gray-100 p-4 rounded">
+          <div>
+            <h2 class="font-bold">${item.name}</h2>
+            <p>₦${item.price} × ${qty}</p>
+          </div>
+          <p class="font-semibold">₦${line}</p>
+        </div>`;
+    });
+    totalAmount = sum;
+    tot.innerText = "Total: ₦" + sum;
+  }
+
+  async function startPayment(provider) {
+    if (!cart.length) return alert("Cart is empty.");
+    // Build items payload expected by backend
+    const items = cart.map((p) => ({
+      product_id: p.id,
+      quantity: p.quantity || 1,
+    }));
+
+    const res = await fetch("/api/orders/initiate/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider,
+        email: window.currentUserEmail || "customer@example.com",
+        items,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error(err);
+      return alert("Failed to start payment");
+    }
+
+    const data = await res.json();
+
+    if (provider === "paystack" && data.authorization_url) {
+      window.location.href = data.authorization_url;
+    } else if (provider === "flutterwave" && data.payment_link) {
+      window.location.href = data.payment_link;
+    } else {
+      alert("Unexpected response from server.");
+    }
+  }
+
+  document.getElementById("payWithPaystack").onclick = () =>
+    startPayment("paystack");
+  document.getElementById("payWithFlutterwave").onclick = () =>
+    startPayment("flutterwave");
+
+  loadCheckout();
+</script>
+{% endblock %}

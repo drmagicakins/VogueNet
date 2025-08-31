@@ -1,0 +1,94 @@
+{% load static %}
+<footer class="bg-gray-900 text-gray-300 px-6 py-10">
+  <div
+    class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8"
+  >
+    <!-- Logo / Branding -->
+    <div>
+      <h2 class="text-white text-xl font-bold mb-4">
+        <img
+          src="{% static '/images/voguenet-logo.png' %}"
+          alt=""
+          class="h-12 mb-0 w-auto"
+          style="width: 150px; height: 150px"
+        />
+      </h2>
+      <p class="text-sm" style="margin-top: -50px">
+        Your ultimate fashion destination. Trendy. Affordable. Original.
+      </p>
+    </div>
+
+    <!-- Shop Links -->
+    <div>
+      <h3 class="text-white text-lg font-semibold mb-4">Shop</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/men/" class="hover:text-white">Men</a></li>
+        <li><a href="/women/" class="hover:text-white">Women</a></li>
+        <li>
+          <a href="/accessories/" class="hover:text-white">Accessories</a>
+        </li>
+        <li><a href="/deals/" class="hover:text-white">Deals</a></li>
+      </ul>
+    </div>
+
+    <!-- Company Info -->
+    <div>
+      <h3 class="text-white text-lg font-semibold mb-4">Company</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/about-us/" class="hover:text-white">About Us</a></li>
+        <li><a href="/careers/" class="hover:text-white">Careers</a></li>
+        <li><a href="/blog/" class="hover:text-white">Blog</a></li>
+        <li><a href="/contact/" class="hover:text-white">Contact</a></li>
+      </ul>
+    </div>
+
+    <!-- Newsletter & Socials -->
+    <div>
+      <h3 class="text-white text-lg font-semibold mb-4">Stay in the loop</h3>
+      <form
+        class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-2"
+      >
+        <input
+          type="email"
+          placeholder="Your email"
+          class="w-full px-4 py-2 text-gray-900 rounded focus:outline-none"
+          required
+        />
+        <button
+          type="submit"
+          class="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded"
+        >
+          Subscribe
+        </button>
+      </form>
+
+      <div class="flex space-x-4 mt-6">
+        <a href="#" class="hover:text-white">
+          <i class="fab fa-facebook-f"></i>
+        </a>
+        <a href="#" class="hover:text-white">
+          <i class="fab fa-twitter"></i>
+        </a>
+        <a href="#" class="hover:text-white">
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a href="#" class="hover:text-white">
+          <i class="fab fa-youtube"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  <script>
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      document.getElementById("cart-count").innerText = cart.length;
+    }
+
+    document.addEventListener("DOMContentLoaded", updateCartCount);
+  </script>
+
+  <!-- Bottom Note -->
+  <div class="text-center text-sm text-gray-500 mt-10">
+    © {{ year|default:"2025" }} VogueNet Stores. All rights reserved.
+  </div>
+</footer>
